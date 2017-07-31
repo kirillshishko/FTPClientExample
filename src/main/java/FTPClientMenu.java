@@ -1,68 +1,115 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class FTPClientMenu {
 
 
-    private FTPClientFunc ftpFuncs;
+    private FTPClientFunctions ftpFunc;
+    private BufferedReader br;
 
     private static final String SEPARATOR = "==================================";
     private static final String MENU = "MENU:";
     private String username;
-    private  String password;
+    private String password;
 
-    FTPClientMenu() throws Exception {
 
-        ftpFuncs = new FTPClientFunc();
+    FTPClientMenu() {
+        br = new BufferedReader(new InputStreamReader(System.in));
+        ftpFunc = new FTPClientFunctions();
     }
 
-    public FTPClientMenu displayLoginMenu() throws Exception {
-        System.out.println(MENU);
+    public FTPClientMenu displayLoginMenu() throws IOException {
+        menuHeader();
         System.out.println("Please enter your username:");
-         username = ftpFuncs.br.readLine();
+        username = br.readLine();
         System.out.println("Enter your password");
-         password = ftpFuncs.br.readLine();
-         ftpFuncs.connect(username, password);
-        ftpFuncs.showDirList();
-        ftpFuncs.showCurrentDir();
-        ftpFuncs.goToFolder("test1");
-        ftpFuncs.showDirList();
-        ftpFuncs.showCurrentDir();
-        ftpFuncs.goToParentDirectory();
-        ftpFuncs.showDirList();
-        ftpFuncs.showCurrentDir();
+        password = br.readLine();
+        ftpFunc.connect(username, password);
+
         return this;
     }
 
     public FTPClientMenu displayStartMenu() throws IOException {
-        System.out.println(MENU);
-        System.out.println(SEPARATOR);
+        menuHeader();
         System.out.println(username);
-        //System.out.println("current dir");?
+        System.out.println("current dir");
+        ftpFunc.showCurrentDir();
         System.out.println("Choose comand:");
         System.out.println("1.Go to folder");
         System.out.println("2.Go to parent directory");
         System.out.println("3.Show folder content");
         System.out.println("4.download file");
         System.out.println("5.exit");
-        String command  = ftpFuncs.br.readLine();
 
         return this;
     }
 
+    public void displayGoToFolderMenu() throws IOException {
+        menuHeader();
+        System.out.println("Which folder to choose");
+        ftpFunc.showDirList();
+        String dir = br.readLine();
+        ftpFunc.goToFolder(dir);
 
-    private enum  Commands {
-        GO_TO_FOLDER,GO_TO_PARENT_DIR,SHOW_FOLDER_CONTENT;
     }
 
-    private void chooseCommand() throws IOException {
-        //Commands command =  //ftpFuncs.br.readLine();
+    public void displayDownloadFileMenu() throws IOException{
+        menuHeader();
+        System.out.println("Enter filename");
+        String filename = br.readLine();
+        ftpFunc.downloadFile(filename,"/ftpservertest" + ftpFunc.recieveCurrentDirFilePath() + filename);
+        System.out.println("FTP File downloaded successfully");
 
     }
+
+
+
+    private void doCommand(String command) throws IOException {
+
+
+        switch (command) {
+            case "1":
+                displayGoToFolderMenu();
+                break;
+            case "2":
+                ftpFunc.goToParentDirectory();
+                break;
+            case  "3":
+                ftpFunc.showDirList();
+                break;
+            case "4":
+
+               displayDownloadFileMenu();
+                break;
+            case "5":
+                ftpFunc.disconnect();
+        }
+
+    }
+
+    private static void menuHeader() {
+        System.out.println(MENU);
+        System.out.println(SEPARATOR);
+    }
+
     public static void main(String[] args) {
+        FTPClientMenu menu = new FTPClientMenu();
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        try {
+            menu.displayLoginMenu();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         try {
             while (true) {
-                FTPClientMenu menu = new FTPClientMenu();
-                menu.displayLoginMenu();
+
+                menu.displayStartMenu();
+                String command = br.readLine();
+                menu.doCommand(command);
             }
         } catch (Exception e) {
             e.printStackTrace();
